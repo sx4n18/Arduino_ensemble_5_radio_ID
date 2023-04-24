@@ -31,7 +31,7 @@ tflite::MicroInterpreter* interpreter = nullptr;
 TfLiteTensor* input = nullptr;
 TfLiteTensor* output = nullptr;
 
-constexpr int kTensorArenaSize = 1024 * 60;
+constexpr int kTensorArenaSize = 1024 * 14;
 // Keep aligned to 16 bytes for CMSIS
 alignas(16) uint8_t tensor_arena[kTensorArenaSize];
 }  // namespace
@@ -50,22 +50,26 @@ void setup() {
   tflite::InitializeTarget();
 
   // Serial initialisation
-  Serial.begin(9600);
-  
+  Serial.begin(19200);
+  while (!Serial)
+  {}
+
+  delay(500); //This is needed so that every printing line in the setup process could be received.
+
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   // OLED display check, this would normally pass... so I removed the Serial
   // connection prerequisite for this statement.
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)){
-    Serial.println(F("SSD1306 allocation failed"));
-    for (;;);
-  }
+  //if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)){
+  //  Serial.println(F("SSD1306 allocation failed"));
+  //  for (;;);
+  //}
   
   ////////////////////////////////////////////////////////////////
   //this is needed, since adafruit logo is in the display buffer
 
-  display_on_oled(0,0, 1, 0, "Loading model...");
-
-  delay(2000);
+  //display_on_oled(0,0, 1, 0, "Loading model...");
+  Serial.println(F("Loading model..."));
+  //delay(2000);
   ////////////////////////////////////////////////////////////////
 
 
@@ -100,9 +104,9 @@ void setup() {
   ////////////////////////////////////////////////////////////////
   //  OLED display
 
-  display_on_oled(0,0, 1, 1, "Initialising...");
-
-  delay(500);
+  //display_on_oled(0,0, 1, 1, "Initialising...");
+  Serial.println(F("Initialising..."));
+  //delay(500);
   ////////////////////////////////////////////////////////////////
 
   // Allocate memory from the tensor_arena for the model's tensors.
@@ -116,14 +120,11 @@ void setup() {
   input = interpreter->input(0);
   output = interpreter->output(0);
 
-  while (!Serial)
-  {}
-
   ////////////////////////////////////////////////////////////////
   //  OLED display
-
-  display_on_oled(0,0, 1, 1, "Initialisation done");
-  delay(1000);
+  Serial.println(F("Initialisation done"));
+  //display_on_oled(0,0, 1, 1, "Initialisation done");
+  //delay(1000);
   ////////////////////////////////////////////////////////////////
   Serial.println(F("Waiting for input"));
 
@@ -141,16 +142,17 @@ void loop() {
   // put your main code here, to run repeatedly:
   // applying what I did in the old implementation to here.
 
-  display_on_oled(0, 20, 2, 0, "Waiting 4 'C' ");
-  
+  //display_on_oled(0, 20, 2, 0, "Waiting 4 'C' ");
+  Serial.println(F("Waiting 4 'C'"));
+
   rc = Serial.read();
   while(rc != 'C')
     {
       rc = Serial.read();
     }
   
-  display_on_oled(0, 20, 2, 0, "Data loading...");
-
+  //display_on_oled(0, 20, 2, 0, "Data loading...");
+  //Serial.println(F("Data loading..."));
   for(int i = 0; i< 1024; i++)
     {
       //Receive all the input numbers
@@ -192,9 +194,10 @@ void loop() {
 
 
   Major_hardvote(voting_list, nominees);
+  //Serial.print(F("Result is: "));
   Serial.println(nominees[0]);
-  display_histogram(nominees);
-  delay(3000);
+  //display_histogram(nominees);
+  //delay(3000);
 
   
 
