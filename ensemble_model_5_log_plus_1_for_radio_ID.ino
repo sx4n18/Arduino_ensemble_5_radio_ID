@@ -31,7 +31,7 @@ tflite::MicroInterpreter* interpreter = nullptr;
 TfLiteTensor* input = nullptr;
 TfLiteTensor* output = nullptr;
 
-constexpr int kTensorArenaSize = 1024 * 60;
+constexpr int kTensorArenaSize = 1024 * 14;
 // Keep aligned to 16 bytes for CMSIS
 alignas(16) uint8_t tensor_arena[kTensorArenaSize];
 }  // namespace
@@ -40,7 +40,7 @@ alignas(16) uint8_t tensor_arena[kTensorArenaSize];
 double log_1_plus_received_input[1024];
 char rc;
 byte voting_list[5];
-char* radio_label[] = {"Am241", "Ba133", "BGD", "Co57", "C060", "Cs137", "DU", "EU152", "Ga67", "HEU",
+char* radio_label[] = {"Am241", "Ba133", "BGD", "Co57", "Co60", "Cs137", "DU", "EU152", "Ga67", "HEU",
 "I131", "Ir192", "Np237", "Ra226", "Tc99m", "Th232", "Tl201", "WGPu"};
 byte nominees[4];
 
@@ -65,7 +65,7 @@ void setup() {
 
   display_on_oled(0,0, 1, 0, "Loading model...");
 
-  delay(2000);
+  delay(500);
   ////////////////////////////////////////////////////////////////
 
 
@@ -111,13 +111,13 @@ void setup() {
     MicroPrintf("AllocateTensors() failed");
     return;
   }
-
+  
+  while (!Serial)
+  {}
   // Obtain pointers to the model's input and output tensors.
   input = interpreter->input(0);
   output = interpreter->output(0);
 
-  while (!Serial)
-  {}
 
   ////////////////////////////////////////////////////////////////
   //  OLED display
@@ -133,7 +133,8 @@ void setup() {
     MicroPrintf("Bad input tensor parameters in model");
     return;
   }
-
+  
+  display.clearDisplay();
 
 }
 
@@ -141,16 +142,28 @@ void loop() {
   // put your main code here, to run repeatedly:
   // applying what I did in the old implementation to here.
 
-  display_on_oled(0, 20, 2, 0, "Waiting 4 'C' ");
-  
+  //display_on_oled(0, 20, 2, 0, "Waiting 4 'C' ");
+  //display_on_oled_without_flushing(60, 0, 1, "Waiting 4 '");
+  display.setTextColor(SSD1306_BLACK,SSD1306_WHITE);
+  display.setCursor(60,0);
+  display.print("Ready to be");
+  display.setCursor(60, 8);
+  display.print("gin");
+  display.display();
   rc = Serial.read();
   while(rc != 'C')
     {
       rc = Serial.read();
     }
   
-  display_on_oled(0, 20, 2, 0, "Data loading...");
-
+  //display_on_oled(0, 20, 2, 0, "Data loading...");
+  //display_on_oled_without_flushing(60, 0, 1, "Data loading...");
+  Serial.println("Y");
+  display.setCursor(60,0);
+  display.print("Data loadin");
+  display.setCursor(60, 8);
+  display.print("g...");
+  display.display();
   for(int i = 0; i< 1024; i++)
     {
       //Receive all the input numbers
@@ -170,6 +183,9 @@ void loop() {
     }
 
   //display_on_oled(0, 20, 2, 0, "Data received");
+  display.setCursor(60,0);
+  display.print("Inferring..");
+  display.display();
 
   // pass the received preprocessed data into the input tensor
   pass_the_number_in(input, log_1_plus_received_input);
@@ -194,7 +210,7 @@ void loop() {
   Major_hardvote(voting_list, nominees);
   Serial.println(nominees[0]);
   display_histogram(nominees);
-  delay(3000);
+  delay(1500);
 
   
 
@@ -214,6 +230,14 @@ void display_on_oled(int8_t x, int8_t y, byte text_size, bool inverse, char* to_
   }
   display.setCursor(x, y);
   display.println(to_display_content);
+  display.display();
+}
+
+void display_on_oled_without_flushing(int8_t x, int8_t y, byte text_size, char* content_2_display)
+{
+  display.setTextSize(text_size);
+  display.setCursor(x, y);
+  display.println(content_2_display);
   display.display();
 }
 
